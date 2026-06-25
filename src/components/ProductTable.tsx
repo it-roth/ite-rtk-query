@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { useGetProductsQuery, Product } from "@/services/fakeStoreApi";
+import { addToCart, removeFromCart } from "@/features/cartSlice/cartSlice";
 import Modal from "./Modal";
 
 const PAGE_SIZES = [5, 10, 20];
@@ -18,6 +20,10 @@ function matchSearch(item: Product, q: string) {
 }
 
 export default function ProductTable() {
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
+  const cartQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   const { data = [], isLoading, isFetching, error } = useGetProductsQuery();
 
   const [search, setSearch] = useState("");
@@ -191,14 +197,30 @@ export default function ProductTable() {
 
       <Modal open={!!selected} onClose={() => setSelected(null)}>
         {selected && (
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-4 md:flex-row">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={selected.image} alt={selected.name} className="h-40 w-40 object-contain" />
-            <div>
+            <div className="flex-1">
               <h3 className="text-lg text-zinc-700">{selected.name}</h3>
               <p className="text-sm text-zinc-600">Category: {selected.category}</p>
               <p className="mt-2 text-xl text-zinc-800">${selected.price.toFixed(2)}</p>
               <p className="mt-4 text-sm text-zinc-700">Slug: {selected.slug}</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => dispatch(addToCart(selected))}
+                  className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700"
+                >
+                  Add to cart
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispatch(removeFromCart(selected))}
+                  className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700"
+                >
+                  Remove from cart
+                </button>
+              </div>
             </div>
           </div>
         )}
